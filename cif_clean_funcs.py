@@ -1,28 +1,37 @@
 import pandas as pd
-import os
 import re
 import math
 
 # column 0-8
 # atomic_number	symbol	name	empirical 	Calculated	van_der_Waals	Covalent(single_bond)	Covalent (triple bond)	Metallic
-element_table_path = r'E:\PythonProjects\src\Covalent_radii_data.csv'
+element_table_path = r'Covalent_radii_data.csv'
 element_table = pd.read_csv(element_table_path)
 df = pd.DataFrame(element_table)
 
+#for Yinlin
+def checkbond(element1, element2, length, min_single_bond_dist=0.9):
+    element_pair=[element1,element2]
+    max_single_bond_dist=bond_dist_max(element_pair)
+    if float(length)>max_single_bond_dist:
+        return 0 #not a bond
+    elif float(length)<min_single_bond_dist:
+        return 0 #not a bond
+    else:
+        return 1 # a bond
 
 # might need to consider H-H bond as a special case
 # as well as customized/user-defined atom label like Ow
 def bond_dist_max(element_pair, calc_dist=0, bond_param=0.56):
     i = 0
-    if element_pair[0]=='H' and element_pair[1]=='H': #[EVIL_FUNS] no H-H, only when not refining H2 adsorption
-        max_single_dist=0
-        return max_single_dist
     while i < len(element_pair):
         if element_pair[i] == 'Ow':
             element_pair[i] = 'O'
         elif element_pair[i] == 'D':
             element_pair[i] = 'H'
         i += 1
+    if element_pair[0]=='H' and element_pair[1]=='H': #[EVIL_FUNS] no H-H, only when not refining H2 adsorption
+        max_single_dist=0
+        return max_single_dist
     atom1_idx = df.index[df['symbol'] == element_pair[0]].values[0]  # pd.iloc use 0-based indexing i.e. H-No.0 C-No.5,
     atom2_idx = df.index[df['symbol'] == element_pair[1]].values[0]  # not referring to "atomic number" in the file
     sum_radii = float(df.iloc[atom1_idx, 6]) / 100 + float(df.iloc[atom2_idx, 6]) / 100
@@ -133,5 +142,6 @@ if __name__ == '__main__':
     #print(translate_coords_to_onezero('-5.33', '-6.251(1)', '7.6251'))
     #print(translate_coords_to_onezero('0','0', '-5.678(6)'))
     print(translate_coords_to_onezero('-5.360(4)','-0.250000(12)', '5.178(6)'))
+    print(checkbond('H','H','0.5'))
 
 

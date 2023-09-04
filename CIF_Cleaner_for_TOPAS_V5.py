@@ -21,8 +21,8 @@ __version__ = 'cif_clean_plus2.0'
 
 intro = 'Enter dir of cif file.\n'
 cif_dir = input(intro).replace('"', '')
-if '.cif' not in cif_dir:
-    raise TypeError('not a cif file')
+#if '.cif' not in cif_dir:
+#    raise TypeError('not a cif file')
 print(cif_dir)
 
 if os.path.split(cif_dir)[0] != '':
@@ -47,15 +47,47 @@ while ln < len(cif_content):
     print(line_content)
     element_pair = []
     if re.match(r'.*a\d.*', cif_content[ln]) != None:  # remove dummy points during refinement
-        ln = ln + 1
+        for i in line_content:
+            if re.match(r'a\d.*', i) != None:
+                ln=ln+1
+                print('dummy atoms detected, line skipped')
+                break
         continue
     elif 'Invalid' in cif_content[ln]:
         print('invalid')
         ln = ln + 1
         continue
+    elif len(line_content)==9 and line_content[-3]=='0': # remove 0 occupancy sites
+        print('zero occupancy')
+        ln=ln+1
+        continue
+
     #bond dist check
-    elif re.match(r'[A-Z][a-z]{0,2}[0-9]{0,4}', line_content[1]) and re.match(r'[A-Z][a-z]{0,2}[0-9]{0,4}',line_content[2]) and re.match(r'([0-9])\.([0-9]+)(.[0-9]+.){0,1}', line_content[3]) != None:
-        print('we in')
+    elif re.match(r'[A-Z][a-z]{0,2}[0-9]{0,4}', line_content[1]) != None and \
+            re.match(r'[A-Z][a-z]{0,2}[0-9]{0,4}',line_content[2]) != None and \
+            re.match(r'[A-Z][a-z]{0,2}[0-9]{0,4}', line_content[3]) == None:
+        print('dist. check')
+
+        # skip large error due to software issue(should not output certain lines at special conditions)
+        if '(' in line_content[3] and ')' in line_content[3]:
+            print('esd check')
+            dist_digits=len(line_content[3].split('(')[0])
+            error_start=line_content[3].index('(')
+            error_end=line_content[3].index(')')
+            error_digits=error_end-error_start-1
+            if error_digits>2:
+                print('large esd on distance, check if it is the model or the software issue')
+                ln = ln + 1
+                continue
+            elif dist_digits>6:
+                print('unrealistic accuracy on bond distance, check if it is the model or the software issue')
+                ln = ln + 1
+                continue
+            elif dist_digits-error_digits<2:
+                print('large esd on distance, check if it is the model or the software issue')
+                ln = ln + 1
+                continue
+
         element_pair.append(re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}', line_content[1]).group(1))
         element_pair.append(re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}', line_content[2]).group(1))
         print(element_pair[0], ' ', element_pair[1], ' ', line_content[3].split('(')[0])
@@ -80,15 +112,40 @@ while ln < len(cif_content):
             cif_new_content.append(cif_content[ln])
             ln = ln + 1
             continue
+
+
     #angle check
-    elif re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}', line_content[1]) and re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}',line_content[2]) and re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}',line_content[3]) !=None:
+    elif re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}', line_content[1]) and \
+            re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}',line_content[2]) and \
+            re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}',line_content[3]) !=None:
         print('angle check')
         redundant=False
-        if float(line_content[4].split('(')[0]) ==0: #angle before esd
+
+        # skip large error due to software issue(should not output certain lines at special conditions)
+        if '(' in line_content[4] and ')' in line_content[4]:
+            angle_digits=len(line_content[4].split('(')[0])
+            error_start=line_content[4].index('(')
+            error_end=line_content[4].index(')')
+            error_digits=error_end-error_start-1
+            if error_digits>2:
+                print('large esd on angle, check if it is the model or the software issue')
+                ln = ln + 1
+                continue
+            elif angle_digits>6:
+                print('unrealistic accuracy on angle, check if it is the model or the software issue')
+                ln = ln + 1
+                continue
+            elif angle_digits-error_digits<3:
+                print('large esd on angle, check if it is the model or the software issue')
+                ln = ln + 1
+                continue
+
+        # angle before esd
+        if float(line_content[4].split('(')[0]) ==0:
             print('0 bond angle')
             ln = ln + 1
             continue
-        elif float(line_content[4].split('(')[0]) < 80: #remove low angle value
+        elif float(line_content[4].split('(')[0]) < 90: #remove low angle value
             print('small angle')
             ln = ln + 1
             continue
@@ -96,7 +153,8 @@ while ln < len(cif_content):
             print('missing esd, skipped')
             ln = ln + 1
             continue
-        elif re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}',line_content[2]).groups()[0] is 'H': #[EVIL FUNCs]
+        elif re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}',line_content[2]).groups()[0] is 'H' or \
+                re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}',line_content[2]).groups()[0] is 'D': #[EVIL FUNCs]
             print('angle with H in the middle, line skipped')
             ln=ln+1
             continue
@@ -131,7 +189,7 @@ while ln < len(cif_content):
     #    ln=ln+1
     #    continue
     else:
-        print('skipped bond distance checking')
+        print('no error, line appended to new cif')
         cif_new_content.append(cif_content[ln])
         ln = ln + 1
         continue
