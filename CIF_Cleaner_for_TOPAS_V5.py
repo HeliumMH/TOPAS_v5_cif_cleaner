@@ -1,6 +1,6 @@
 """
-Code name: cif_clean_plus2.0
 Author: Meng He (PhD, University of Manchester)
+
 Usage:
 1.remove dummy point related redundant info during TOPAS refinement
 2.check bond distance based on covalent radii
@@ -16,8 +16,6 @@ from cif_clean_funcs import *
 import subprocess
 import itertools
 
-__author__ = '2Vague'
-__version__ = 'cif_clean_plus2.0'
 
 intro = 'Enter dir of cif file.\n'
 cif_dir = input(intro).replace('"', '')
@@ -46,26 +44,32 @@ while ln < len(cif_content):
     line_content = reg_s.split(cif_content[ln])
     print(line_content)
     element_pair = []
-    if re.match(r'.*a\d.*', cif_content[ln]) != None:  # remove dummy points during refinement
-        for i in line_content:
-            if re.match(r'a\d.*', i) != None:
-                ln=ln+1
-                print('dummy atoms detected, line skipped')
-                break
+    dummy_flag=False
+    skip=False
+
+    for i in line_content:
+        if re.match(r'^(a)([0-9]{0,4})(\_[A-Z]{0,1}[a-z]{0,1}[0-9]{0,4}){0,5}', i) != None:
+            skip = True
+            print('dummy atoms detected, line skipped')
+            break
+        elif i=='Invalid':
+            skip = True
+            print('Invalid value')
+            break
+    if skip is True:
+        print('line skipped')
+        ln=ln+1
         continue
-    elif 'Invalid' in cif_content[ln]:
-        print('invalid')
-        ln = ln + 1
-        continue
-    elif len(line_content)==9 and line_content[-3]=='0': # remove 0 occupancy sites
+
+    if len(line_content)==9 and line_content[-3]=='0': # remove 0 occupancy sites
         print('zero occupancy')
         ln=ln+1
         continue
 
     #bond dist check
-    elif re.match(r'[A-Z][a-z]{0,2}[0-9]{0,4}', line_content[1]) != None and \
-            re.match(r'[A-Z][a-z]{0,2}[0-9]{0,4}',line_content[2]) != None and \
-            re.match(r'[A-Z][a-z]{0,2}[0-9]{0,4}', line_content[3]) == None:
+    elif re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[1]) != None and \
+            re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}',line_content[2]) != None and \
+            re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[3]) == None:
         print('dist. check')
 
         # skip large error due to software issue(should not output certain lines at special conditions)
@@ -88,23 +92,27 @@ while ln < len(cif_content):
                 ln = ln + 1
                 continue
 
-        element_pair.append(re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}', line_content[1]).group(1))
-        element_pair.append(re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}', line_content[2]).group(1))
+        element_pair.append(re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[1]).group(1))
+        element_pair.append(re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[2]).group(1))
         print(element_pair[0], ' ', element_pair[1], ' ', line_content[3].split('(')[0])
-        if float(line_content[3].split('(')[0]) > bond_dist_max(element_pair):
-            print('too long')
+        if element_pair[0]==element_pair[1]=='H': #carefully implement if no H2 gas involved
+            print('skip H-H bond, line skipped')
+            ln = ln + 1
+            continue
+        elif float(line_content[3].split('(')[0]) > bond_dist_max(element_pair):
+            print('too long, line skipped')
             ln = ln + 1
             continue
         elif float(line_content[3].split('(')[0])<bond_dist_min_manual(element_pair):
-            print('too short')
+            print('too short, line skipped')
             ln = ln + 1
             continue
         elif float(line_content[3].split('(')[0]) ==0:
-            print('overlapped atom')
+            print('overlapped atom, line skipped')
             ln = ln + 1
             continue
         elif '(' not in line_content[3]: # skip bond with no esd [EVIL FUNCs]
-            print('missing esd, skipped')
+            print('missing esd, line skipped')
             ln = ln + 1
             continue
         else:
@@ -115,9 +123,9 @@ while ln < len(cif_content):
 
 
     #angle check
-    elif re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}', line_content[1]) and \
-            re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}',line_content[2]) and \
-            re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}',line_content[3]) !=None:
+    elif re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[1]) and \
+            re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}',line_content[2]) and \
+            re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}',line_content[3]) !=None:
         print('angle check')
         redundant=False
 
@@ -128,29 +136,29 @@ while ln < len(cif_content):
             error_end=line_content[4].index(')')
             error_digits=error_end-error_start-1
             if error_digits>2:
-                print('large esd on angle, check if it is the model or the software issue')
+                print('large esd on angle, check if it is the model or the software issue, line skipped')
                 ln = ln + 1
                 continue
             elif angle_digits>6:
-                print('unrealistic accuracy on angle, check if it is the model or the software issue')
+                print('unrealistic accuracy on angle, check if it is the model or the software issue, line skipped')
                 ln = ln + 1
                 continue
             elif angle_digits-error_digits<3:
-                print('large esd on angle, check if it is the model or the software issue')
+                print('large esd on angle, check if it is the model or the software issue, line skipped')
                 ln = ln + 1
                 continue
 
         # angle before esd
         if float(line_content[4].split('(')[0]) ==0:
-            print('0 bond angle')
+            print('0 bond angle, line skipped')
             ln = ln + 1
             continue
         elif float(line_content[4].split('(')[0]) < 90: #remove low angle value
-            print('small angle')
+            print('small angle, line skipped')
             ln = ln + 1
             continue
         elif '(' not in line_content[4]: # skip angle with no esd [EVIL FUNCs]
-            print('missing esd, skipped')
+            print('missing esd, line skipped')
             ln = ln + 1
             continue
         elif re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}',line_content[2]).groups()[0] is 'H' or \
@@ -167,11 +175,11 @@ while ln < len(cif_content):
                 redundant=True
                 break
         if redundant is True:
-            print('not A-B-C angle, atom sites in angle not unique')
+            print('not A-B-C angle, atom sites in angle not unique, line skipped')
             ln=ln+1
             continue
         else:
-            print('okay')
+            print('no error, line appended to new cif')
             cif_new_content.append(cif_content[ln])
             ln = ln + 1
             continue
