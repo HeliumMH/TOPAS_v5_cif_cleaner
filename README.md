@@ -1,2 +1,2 @@
 # TOPAS_cif_cleaner
-This repo aims at cleaning unreasonable/irrelevant output lines by the default macro "Out_CIF" in TOPAS V5.0 for passing the CHECKCIF. 
+Text cleaning and sorting of the default bond distances and bond angles from the output of TOPAS v5.
