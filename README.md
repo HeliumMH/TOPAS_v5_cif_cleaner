@@ -1,2 +1,2 @@
-# TOPAS_cif_cleaner
-Text cleaning and sorting of the default bond distances and bond angles from the output of TOPAS v5.
+# TOPAS v5.0 cif cleaner
+A python script for cleaning unrealistic bond dist. or angle output lines from TOPAS V5. 
