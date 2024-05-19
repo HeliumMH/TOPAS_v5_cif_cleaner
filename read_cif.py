@@ -1,12 +1,11 @@
-#
-# cif.py
-#
 # Python CIF parser: https://gitlab.com/pdbjapan/tools/cif-parsers
-# 
 # By Gert-Jan Bekker
 # License: MIT
-#   See https://gitlab.com/pdbjapan/tools/cif-parsers/blob/master/LICENSE
-#
+
+'''
+Know issue: can not handle multiple lines start with the semi-colum ';'
+'''
+
 import pandas as pd
 
 # column 0-8
@@ -293,6 +292,7 @@ def is_exist_bond(atom1, atom2, list_b):
 
 
 def tidy_up(block):
+    #print(block)
     # crystal_system
     if block["cell_angle_alpha"][0] == "90":
         if block["cell_angle_beta"][0] == "90":
@@ -346,4 +346,3 @@ def tidy_up(block):
     block["exptl_crystal_density_diffrn"][0] = "%.4f" % (density)
 
     return block
-
