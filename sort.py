@@ -1,17 +1,14 @@
-import os, itertools, read_cif
+import os, read_cif
 from collections import namedtuple
 from read_cif import __loadCIF__, is_equal, read_number, is_exist_bond, output_loop
 
 Bond = namedtuple("Bond", ["atom1", "atom2", "length", "loc1", "loc2"])
 Angle = namedtuple("Angle", ["atom1", "atom2", "atom3", "angle", "loc1", "loc2", "loc3"])
 
-__author__ = '2Vague'
-__version__ = 'cif_clean_plus2.0'
 
 
 def sort(cif_dir):
-    # intro = 'Enter dir of cif file.\n'
-    # cif_dir = input(intro).replace('"', '')
+    print('\nSorting blocks now:\n')
     if '.cif' not in cif_dir:
         raise TypeError('not a cif file')
     print("Input_File: " + cif_dir)
@@ -88,9 +85,11 @@ def sort(cif_dir):
                              "geom_angle", "geom_angle_site_symmetry_1", "geom_angle_site_symmetry_2",
                              "geom_angle_site_symmetry_3"]
                 cif_new_content += output_loop(variables, block, angle_list_n)
-            elif len(block[key]) == 1:
-                if " " in block[key][0]:
+            elif len(block[key]) <= 3:
+                if " " in block[key][0] and ';' not in block[key][0]:
                     cif_new_content += "_%-35s\"%s\"\n" % (key, block[key][0])
+                elif ';' in block[key][0]:
+                    cif_new_content += ";\n"
                 else:
                     cif_new_content += "_%-35s%s\n" % (key, block[key][0])
 
@@ -100,7 +99,8 @@ def sort(cif_dir):
 
     print("Program finished normally.")
 
-if __name__==   "__main__":
+
+if __name__ == "__main__":
     intro = 'Enter dir of cif file.\n'
     cif_dir = input(intro).replace('"', '')
     sort(cif_dir)
