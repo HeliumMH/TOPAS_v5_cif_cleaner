@@ -1,3 +1,10 @@
+"""
+By Yinlin Chen, Meng He
+Usage:
+    tidy, format the cif file
+    removing non-existing angles based on the existing bonds 
+"""
+
 import os, read_cif
 from collections import namedtuple
 from read_cif import __loadCIF__, is_equal, read_number, is_exist_bond, output_loop
