@@ -1,3 +1,10 @@
+"""
+By Yinlin Chen, Meng He
+Usage:
+    tidy, format the cif file
+    removing non-existing angles based on the existing bonds 
+"""
+
 import os, read_cif
 from collections import namedtuple
 from read_cif import __loadCIF__, is_equal, read_number, is_exist_bond, output_loop
@@ -85,13 +92,18 @@ def sort(cif_dir):
                              "geom_angle", "geom_angle_site_symmetry_1", "geom_angle_site_symmetry_2",
                              "geom_angle_site_symmetry_3"]
                 cif_new_content += output_loop(variables, block, angle_list_n)
-            elif len(block[key]) <= 3:
+            elif len(block[key]) <= 3: # any other general keys
                 if " " in block[key][0] and ';' not in block[key][0]:
                     cif_new_content += "_%-35s\"%s\"\n" % (key, block[key][0])
                 elif ';' in block[key][0]:
                     cif_new_content += ";\n"
                 else:
                     cif_new_content += "_%-35s%s\n" % (key, block[key][0])
+            elif key == 'pd_meas_2theta_scan': # refined pattern key
+                variables = ['pd_meas_2theta_scan', 'pd_proc_intensity_total',
+                             'pd_calc_intensity_total', 'pd_proc_ls_weight']
+                cif_new_content += output_loop(variables, block, range(len(block[key])))
+
 
     with open(cif_new_dir, 'w') as f:
         f.writelines(cif_new_content)
