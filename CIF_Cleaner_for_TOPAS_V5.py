@@ -73,28 +73,27 @@ if clean_required:
         dummy_flag = False
         skip = False
 
+        #0 other checks
         for i in line_content:
-            if len(line_content) == 9 and re.match(r'^(a)([0-9]{0,4})(\_[A-Z]{0,1}[a-z]{0,1}[0-9]{0,4}){0,5}', i) != None:
+            if re.match(r'^(a)([0-9]{0,4})', i) != None:
                 skip = True
                 print('dummy atoms detected, line skipped')
                 break
+
+        if 'Invalid' in line_content:
+            print('Invalid value')
+            skip = True
+
+        if len(line_content) == 9 and line_content[-3] == '0':  # remove 0 occupancy sites
+            print('zero occupancy')
+            skip = True
 
         if skip is True:
             print('line skipped')
             ln = ln + 1
             continue
 
-        if 'Invalid' in line_content:
-            print('Invalid value')
-            ln = ln + 1
-            continue
-
-        if len(line_content) == 9 and line_content[-3] == '0':  # remove 0 occupancy sites
-            print('zero occupancy')
-            ln = ln + 1
-            continue
-
-        #bond dist check
+        #1 bond dist check
         if re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[1]) != None and \
                 re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[2]) != None and \
                 re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[3]) == None:
@@ -155,7 +154,7 @@ if clean_required:
                 continue
 
 
-        #angle check
+        #2 angle check
         if re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[1]) and \
                 re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[2]) and \
                 re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[3]) != None:

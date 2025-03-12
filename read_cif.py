@@ -293,18 +293,18 @@ def is_exist_bond(atom1, atom2, list_b):
 
 def tidy_up(block):
     #print(block)
-    # crystal_system
+    # crystal_system (can be improved to decide sg based on sg symbol)
     if block["cell_angle_alpha"][0] == "90":
         if block["cell_angle_beta"][0] == "90":
-            if block["cell_length_a"] == block["cell_length_b"]:
+            if block["cell_angle_gamma"][0] == "120":
+                crystal_system = "hexagonal"
+            elif block["cell_angle_gamma"][0] == "90" and block["cell_length_a"] == block["cell_length_b"]:
                 if block["cell_length_a"] == block["cell_length_c"]:
                     crystal_system = "cubic"
                 else:
                     crystal_system = "tetragonal"
             else:
                 crystal_system = "orthorhombic"
-        elif block["cell_angle_beta"][0] == "120":
-            crystal_system = "hexagonal"
         else:
             crystal_system = "monoclinic"
     else:
