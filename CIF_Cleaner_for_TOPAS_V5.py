@@ -14,29 +14,26 @@ import itertools
 intro = 'Enter dir of cif file.\n'
 cif_dir = input(intro).replace('"', '')
 
+verbose = False
+
 esd_flag = input("Want to check the errors of bond angles/length? Y[yes] or N[no] \n")
-esd_check = True
-if esd_flag == 'Y' or 'y' or '':
+
+if esd_flag in ['Y', 'y']:
     esd_check = True
-elif esd_flag == 'N' or 'n':
+elif esd_flag in ['N', 'n']:
     esd_check = False
 else:
-    raise TypeError('Invalid option')
+    print('Invalid input, defaulting to check esd.')
+    esd_check = True
 
 sort_flag = input('Options: [1] Clean and sort (default); [2] Clean only; [3] Sort only. You choose (number): \n')
-print(sort_flag)
-if sort_flag == '1':
-    sort_required = True
-    clean_required = True
-elif sort_flag == '2':
-    sort_required = False
+if sort_flag in ['1','2']:
     clean_required = True
 elif sort_flag == '3':
-    sort_required = True
     clean_required = False
 else:
-    print('No option selected, processing with default settings.')
-    sort_required = True
+    print('No option selected, processing with defaults: clean and sort.')
+    sort_flag = '1'
     clean_required = True
 
 if '.cif' not in cif_dir:
@@ -61,45 +58,44 @@ reg_s = re.compile('\s+')  # split line and return a list of elements
 
 if clean_required:
     print(f'\nCleaning the cif now:\n')
-    print(f'Input_File:{cif_dir}')
-    print(f'Input_File:{cif_new_dir}')
+    print(f'Input_File: {cif_dir}')
+    print(f'Output_File: {cif_new_dir}')
 
     while ln < len(cif_content):
-        # print(cif_new_content)
-        # line_content = []
         line_content = reg_s.split(cif_content[ln])
-        print(line_content)
+        if verbose: print(line_content)
         element_pair = []
         dummy_flag = False
         skip = False
 
         #0 other checks
         for i in line_content:
-            if re.match(r'^(a)([0-9]{0,4})', i) != None:
+            if re.match(r'^(a)([0-9]{0,4})', i) is not None:
                 skip = True
-                print('dummy atoms detected, line skipped')
+                if verbose: print('dummy atoms detected, line skipped')
                 break
 
         if 'Invalid' in line_content:
-            print('Invalid value')
+            if verbose: print('Invalid value')
             skip = True
 
         if len(line_content) == 9 and line_content[-3] == '0':  # remove 0 occupancy sites
-            print('zero occupancy')
+            if verbose: print('zero occupancy')
             skip = True
 
         if skip is True:
-            print('line skipped')
+            if verbose: print('line skipped')
             ln = ln + 1
             continue
 
+        atom_symbol = r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}'
         #1 bond dist check
-        if re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[1]) != None and \
-                re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[2]) != None and \
-                re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[3]) == None:
+        if re.match(atom_symbol, line_content[1])  and \
+           re.match(atom_symbol, line_content[2])  and \
+           re.match(atom_symbol, line_content[3]) is None:
 
             if esd_check:
-                print('check error of bond distance...')
+                if verbose: print('check error of bond distance...')
                 # skip large error due to software issue(should not output certain lines at special conditions)
                 if '(' in line_content[3] and ')' in line_content[3]:
                     dist_digits = len(line_content[3].split('(')[0])
@@ -107,60 +103,61 @@ if clean_required:
                     error_end = line_content[3].index(')')
                     error_digits = error_end - error_start - 1
                     if error_digits > 2:
-                        print('large esd on distance, check if it is the model or the software issue')
+                        if verbose: print('large esd on distance, check if it is the model or the software issue')
                         ln = ln + 1
                         continue
                     elif dist_digits > 6:
-                        print('unrealistic accuracy on bond distance, check if it is the model or the software issue')
+                        if verbose: print(
+                            'unrealistic accuracy on bond distance, check if it is the model or the software issue')
                         ln = ln + 1
                         continue
                     elif dist_digits - error_digits < 2:
-                        print('large esd on distance, check if it is the model or the software issue')
+                        if verbose: print('large esd on distance, check if it is the model or the software issue')
                         ln = ln + 1
                         continue
                 else:
                     dist_digits = len(line_content[3].split('.')[1])
                     if dist_digits > 6:
-                        print('unrealistic accuracy on bond distance, check if it is the model or the software issue')
+                        if verbose: print(
+                            'unrealistic accuracy on bond distance, check if it is the model or the software issue')
                         ln = ln + 1
                         continue
 
-            print('check bond distance value...')
+            if verbose: print('check bond distance value...')
             element_pair.append(
-                re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[1]).group(1))
+                re.match(atom_symbol, line_content[1]).group(1))
             element_pair.append(
-                re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[2]).group(1))
-            print(element_pair[0], ' ', element_pair[1], ' ', line_content[3].split('(')[0])
+                re.match(atom_symbol, line_content[2]).group(1))
+            if verbose: print(element_pair[0], ' ', element_pair[1], ' ', line_content[3].split('(')[0])
             if element_pair[0] == element_pair[1] == 'H':  #carefully implement if no H2 gas involved
-                print('skip H-H bond, line skipped')
+                if verbose: print('skip H-H bond, line skipped')
                 ln = ln + 1
                 continue
             elif float(line_content[3].split('(')[0]) > bond_dist_max(element_pair):
-                print('too long, line skipped')
+                if verbose: print('too long, line skipped')
                 ln = ln + 1
                 continue
             elif float(line_content[3].split('(')[0]) < bond_dist_min_manual(element_pair):
-                print('too short, line skipped')
+                if verbose: print('too short, line skipped')
                 ln = ln + 1
                 continue
             elif float(line_content[3].split('(')[0]) == 0:
-                print('overlapped atom, line skipped')
+                if verbose: print('overlapped atom, line skipped')
                 ln = ln + 1
                 continue
             else:
-                print('reasonable bond distance, line kept')
+                if verbose: print('reasonable bond distance, line kept')
                 cif_new_content.append(cif_content[ln])
                 ln = ln + 1
                 continue
 
-
         #2 angle check
-        if re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[1]) and \
-                re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[2]) and \
-                re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}', line_content[3]) != None:
+        if re.match(atom_symbol, line_content[1]) and \
+           re.match(atom_symbol, line_content[2]) and \
+           re.match(atom_symbol, line_content[3]) is not None:
             redundant = False
             if esd_check:
-                print('check error of bond angle...')
+                if verbose: print('check error of bond angle...')
                 # skip large error due to software issue(should not output certain lines at special conditions)
                 if '(' in line_content[4] and ')' in line_content[4]:
                     angle_digits = len(line_content[4].split('(')[0])
@@ -171,38 +168,40 @@ if clean_required:
                         decimal_points = error_start - line_content[4].index('.') - 1
                     else:
                         decimal_points = 0
-                    print(f'num of decimal is {decimal_points}')
+                    if verbose: print(f'num of decimal is {decimal_points}')
                     if error_digits > 2:
-                        print('large esd on angle, check if it is the model or the software issue, line skipped')
+                        if verbose: print(
+                            'large esd on angle, check if it is the model or the software issue, line skipped')
                         ln = ln + 1
                         continue
                     elif angle_digits > 6:
-                        print(
+                        if verbose: print(
                             'unrealistic accuracy on angle, check if it is the model or the software issue, line skipped')
                         ln = ln + 1
                         continue
                     elif decimal_points == 0 and angle_digits - error_digits <= 1:
-                        print('large esd on angle, check if it is the model or the software issue, line skipped')
+                        if verbose: print(
+                            'large esd on angle, check if it is the model or the software issue, line skipped')
                         ln = ln + 1
                         continue
 
-            print('check bond angle value...')
+            if verbose: print('check bond angle value...')
             if float(line_content[4].split('(')[0]) == 0:
-                print('0 bond angle, line skipped')
+                if verbose: print('0 bond angle, line skipped')
                 ln = ln + 1
                 continue
             elif float(line_content[4].split('(')[0]) < 85:  #remove low angle value
-                print('small angle, line skipped')
+                if verbose: print('small angle, line skipped')
                 ln = ln + 1
                 continue
-            elif re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}', line_content[2]).groups()[0] == 'H' or \
-                    re.match(r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,3}', line_content[2]).groups()[
+            elif re.match(atom_symbol, line_content[2]).groups()[0] == 'H' or \
+                    re.match(atom_symbol, line_content[2]).groups()[
                         0] == 'D':  #[EVIL FUNCs]
-                print('angle with H in the middle, line skipped')
+                if verbose: print('angle with H in the middle, line skipped')
                 ln = ln + 1
                 continue
             elif len(line_content) != 9:  #[EVIL FUNCs]
-                print('num of line elements not match with loop_')
+                if verbose: print('num of line elements not match with loop_')
                 ln = ln + 1
                 continue
             for pair in itertools.permutations([line_content[1], line_content[2], line_content[3]],
@@ -211,11 +210,11 @@ if clean_required:
                     redundant = True
                     break
             if redundant is True:
-                print('not A-B-C angle, atom sites in angle not unique, line skipped')
+                if verbose: print('not A-B-C angle, atom sites in angle not unique, line skipped')
                 ln = ln + 1
                 continue
             else:
-                print('reasonable angle value, line kept')
+                if verbose: print('reasonable angle value, line kept')
                 cif_new_content.append(cif_content[ln])
                 ln = ln + 1
                 continue
@@ -224,7 +223,8 @@ if clean_required:
         ln = ln + 1
         continue
 
-if sort_flag == '1' or sort_flag == '2':
+if clean_required:
+    print('New file written.')
     with open(cif_new_dir, 'wt') as f:
         f.writelines(cif_new_content)
         f.close()
@@ -234,3 +234,4 @@ if sort_flag == '1':
     sort(cif_new_dir)
 elif sort_flag == '3':
     sort(cif_dir)
+
