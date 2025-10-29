@@ -1,11 +1,13 @@
 # TOPAS v5.0 cif cleaner
-A python script for cleaning unrealistic bond dist. or angle output lines from TOPAS V5. 
-Also useful for removing dummy atom sites defined like 'a0' 'a1' 
+A python script for cleaning unrealistic bond dist. or angle output lines from TOPAS V5.  
+To produce CSD acceptable ready-to-deposit cif files.  
 
-For bond distance, it simply compares the value calculated by TOPAS and single bond distance calculated based on covalent radii (from wikipedia).
-For angle, it removes H centered bond angle values, like O-H-C, as well as any angle value below 90 deg.
+Usage:  
+1. remove dummy point related redundant info during TOPAS refinement, e.g. "a0"  
+2. check bond distance based on covalent radii    
+3. remove unreasonable angle (H-H-X) and formatting error from TOPAS "out_bonds_angles" macro, e.g., "invalid"  
 
-NB: alternative workaround is to put 'min_r' and 'max_r' in 'site' declaration line
+NB: alternative workaround for bond distance is to put 'min_r' and 'max_r' in 'site' declaration line
 
 Python: 3.9+
 Dependences: Pandas
