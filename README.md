@@ -7,7 +7,7 @@ Usage:
 2. check bond distance based on covalent radii    
 3. remove unreasonable angle (H-H-X) and formatting error from TOPAS "out_bonds_angles" macro, e.g., "invalid"  
 
-NB: alternative workaround for bond distance is to put 'min_r' and 'max_r' in 'site' declaration line
+NB: alternative workaround for tidy up bond dist. is to put 'min_r' and 'max_r' in 'site' declaration line
 
 Python: 3.9+  
 Dependences: Pandas  
