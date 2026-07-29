@@ -7,6 +7,7 @@ Know issue: can not handle multiple lines start with the semi-colum ';'
 '''
 
 import pandas as pd
+import re
 
 # column 0-8
 # atomic_number	symbol	name	empirical 	Calculated	van_der_Waals	Covalent(single_bond)	Covalent (triple bond)	Metallic
@@ -29,6 +30,9 @@ wt_dict = {'H': 1.008, 'D': 2.014, 'Li': 6.941, 'Be': 9.012, 'B': 10.811, 'C': 1
 
 
 def checkBond(element1, element2, length, min_single_bond_dist=0.9):
+    element_symbol = r'^([A-Z][a-z]{0,1})([+-]{0,1}[0-9]{0,1})'
+    element1 = re.match(element_symbol, element1).group(1)
+    element2 = re.match(element_symbol, element2).group(1)
     element_pair = [element1, element2]
     max_single_bond_dist = bond_dist_max(element_pair)
     if float(length) > max_single_bond_dist:
