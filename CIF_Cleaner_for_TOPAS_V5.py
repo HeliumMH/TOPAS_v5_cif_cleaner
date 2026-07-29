@@ -88,6 +88,11 @@ if clean_required:
             ln = ln + 1
             continue
 
+        #replace oxidation state with simple element symbol, e.g., Fe+2 -> Fe
+        for i in range(len(line_content)):
+            if re.match(r'^([A-Z][a-z]{0,1})([+-]{1}[0-9]{0,1})', line_content[i]) is not None and '_symmetry_space_group_name_H-M' not in line_content:
+                line_content[i] = re.match(r'^([A-Z][a-z]{0,1})([+-]{1}[0-9]{0,1})', line_content[i]).group(1)
+
         atom_symbol = r'^([A-Z][a-z]{0,1})([0-9]{0,4})(\_[0-9]{0,4}){0,5}'
         #1 bond dist check
         if re.match(atom_symbol, line_content[1])  and \
