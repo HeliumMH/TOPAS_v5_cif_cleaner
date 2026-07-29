@@ -10,6 +10,9 @@ df = pd.DataFrame(element_table)
 
 #for Yinlin
 def checkbond(element1, element2, length, min_single_bond_dist=0.9):
+    element_symbol = r'^([A-Z][a-z]{0,1})([+-]{1}[0-9]{0,1})'
+    element1 = re.match(element_symbol, element1).group(1)
+    element2 = re.match(element_symbol, element2).group(1)
     element_pair=[element1,element2]
     max_single_bond_dist=bond_dist_max(element_pair)
     if float(length)>max_single_bond_dist:
