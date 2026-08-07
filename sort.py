@@ -45,7 +45,7 @@ def sort(cif_dir):
                              read_number(block["geom_bond_distance"][j]), block["geom_bond_site_symmetry_1"][j],
                              block["geom_bond_site_symmetry_2"][j])
             try:
-                if read_cif.checkBond(atom_dict[temp_bond.atom1], atom_dict[temp_bond.atom2], temp_bond.length):
+                if read_cif.checkbond(atom_dict[temp_bond.atom1], atom_dict[temp_bond.atom2], temp_bond.length):
                     bond_list_n.append(j)
                     bond_list.append(temp_bond)
             except KeyError:
